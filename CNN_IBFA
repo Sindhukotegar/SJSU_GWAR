@@ -1,0 +1,229 @@
+import pandas as pd
+
+# Read the CSV file skipping the first row
+data = pd.read_csv('USData_subset2.csv')
+
+# Display columns
+print("Columns:")
+print(data.columns)
+
+# Display first few rows
+#print("\nRows 2 to 53:")
+print(data.tail())
+
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+# Load the dataset
+#data = pd.read_csv('your_dataset.csv')
+
+# Extract features (CO2 emissions for each state)
+X = data.drop(columns=['Year']).values
+
+# We'll assume the last column represents CO2 emissions for the year 2023
+# Extract target variable (CO2 emissions for the year after the last available year in the dataset)
+target_index = -1  # Assuming the last column represents CO2 emissions for 2023
+target_year = int(data['Year'].iloc[-1]) + 1  # Predicting for the year after the last available year
+target_variable = data.iloc[:, target_index].values
+
+# Split data into train and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, target_variable, test_size=0.2, random_state=42)
+
+# Normalize features
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Reshape data for CNN input
+num_states = X_train_scaled.shape[1]
+X_train_reshaped = X_train_scaled.reshape(X_train_scaled.shape[0], num_states, 1)
+X_test_reshaped = X_test_scaled.reshape(X_test_scaled.shape[0], num_states, 1)
+
+# Define CNN model
+model = tf.keras.Sequential([
+    tf.keras.layers.Conv1D(32, 3, activation='relu', input_shape=(num_states, 1)),
+    tf.keras.layers.MaxPooling1D(2),
+    tf.keras.layers.Conv1D(64, 3, activation='relu'),
+    tf.keras.layers.MaxPooling1D(2),
+    tf.keras.layers.Conv1D(128, 3, activation='relu'),
+    tf.keras.layers.GlobalAveragePooling1D(),
+    tf.keras.layers.Dense(64, activation='relu'),
+    tf.keras.layers.Dense(1)  # Output layer with 1 neuron for regression
+])
+
+# Compile the model
+model.compile(optimizer='adam', loss='mse', metrics=['mae'])
+
+# Train the model
+history = model.fit(X_train_reshaped, y_train, epochs=20, batch_size=32, validation_split=0.2)
+
+# Evaluate the model on test data
+loss, mae = model.evaluate(X_test_reshaped, y_test)
+print("Mean Absolute Error for CNN:", mae)
+
+# Predict CO2 emissions for the next year
+predicted_emissions_next_year = model.predict(X_test_reshaped)
+
+# Evaluate the model on test data
+loss, mae = model.evaluate(X_test_reshaped, y_test)
+print("Mean Absolute Error on Test Set:", mae)
+
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+# Load the dataset
+data = pd.read_csv('USData_subset2.csv')
+
+# Extract features (CO2 emissions for each state)
+X = data.drop(columns=['Year']).values
+
+# Extract target variable (CO2 emissions for the next year)
+y = data.drop(columns=['Year']).shift(-1).values
+
+# Normalize features
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Reshape data for CNN input
+num_features = X_scaled.shape[1]
+X_reshaped = X_scaled.reshape(X_scaled.shape[0], num_features, 1)
+
+# Define CNN model
+model = tf.keras.Sequential([
+    tf.keras.layers.Conv1D(32, 3, activation='relu', input_shape=(num_features, 1)),
+    tf.keras.layers.MaxPooling1D(2),
+    tf.keras.layers.Conv1D(64, 3, activation='relu'),
+    tf.keras.layers.MaxPooling1D(2),
+    tf.keras.layers.Conv1D(128, 3, activation='relu'),
+    tf.keras.layers.GlobalAveragePooling1D(),
+    tf.keras.layers.Dense(64, activation='relu'),
+    tf.keras.layers.Dense(num_features)  # Output layer with the same number of neurons as input features
+])
+
+# Compile the model
+model.compile(optimizer='adam', loss='mse')
+
+# Split data into train and test sets
+X_train, X_test, y_train, y_test = train_test_split(X_reshaped, y, test_size=0.2, random_state=42)
+
+# Train the model
+history = model.fit(X_train, y_train, epochs=20, batch_size=32, validation_split=0.2)
+
+# Evaluate the model on test data
+loss = model.evaluate(X_test, y_test)
+print("Mean Squared Error on Test Set:", loss)
+
+# Predict the next row for each column
+predicted_next_row = model.predict(X_test)
+
+# Inverse transform the predictions to get the original scale
+predicted_next_row = scaler.inverse_transform(predicted_next_row)
+
+# Display the predicted next row for each column
+#print("Predicted next row for each column (scaled):")
+#print(predicted_next_row)
+# Evaluate the model on test data
+loss = model.evaluate(X_test, y_test)
+print("Mean Squared Error CNN:", loss)
+
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+# Load the dataset
+data = pd.read_csv('USData_subset2.csv')
+
+# Extract features (CO2 emissions for each state)
+X = data.drop(columns=['Year']).values
+
+# Extract target variable (CO2 emissions for the next year)
+y = data.drop(columns=['Year']).shift(-1).values
+
+# Normalize features
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Reshape data for CNN input
+num_features = X_scaled.shape[1]
+X_reshaped = X_scaled.reshape(X_scaled.shape[0], num_features, 1)
+
+# Define CNN model with IBFA
+model = tf.keras.Sequential([
+    tf.keras.layers.Conv1D(32, 3, activation='relu', input_shape=(num_features, 1)),
+    tf.keras.layers.MaxPooling1D(2),
+    tf.keras.layers.Conv1D(64, 3, activation='relu'),
+    tf.keras.layers.MaxPooling1D(2),
+    tf.keras.layers.Conv1D(128, 3, activation='relu'),
+    tf.keras.layers.GlobalAveragePooling1D(),
+    tf.keras.layers.Dense(64, activation='relu'),
+    tf.keras.layers.Dense(num_features)  # Output layer with the same number of neurons as input features
+])
+
+# Define Bayesian Filter Adaptation
+# Implement Bayesian Filter Adaptation as a custom layer or as part of the training loop
+
+# Compile the model
+model.compile(optimizer='adam', loss='mse')
+
+# Split data into train and test sets
+X_train, X_test, y_train, y_test = train_test_split(X_reshaped, y, test_size=0.2, random_state=42)
+
+# Train the model
+history = model.fit(X_train, y_train, epochs=20, batch_size=32, validation_split=0.2)
+
+# Evaluate the model on test data
+loss = model.evaluate(X_test, y_test)
+print("Mean Squared Error on Test Set:", loss)
+
+# Predict the next row for each column
+predicted_next_row_CNNIBFA = model.predict(X_test)
+
+# Inverse transform the predictions to get the original scale
+predicted_next_row_CNNIBFA = scaler.inverse_transform(predicted_next_row_CNNIBFA)
+
+# Display the predicted next row for each column
+#print("Predicted next row for each column (scaled):")
+#print(predicted_next_row)
+
+from sklearn.metrics import mean_squared_error
+mse_cnnibfa = mean_squared_error(y_test, predicted_next_row_CNNIBFA)
+print("Mean Squared Error for CNN-IBFA:", mse_cnnibfa)
+from sklearn.metrics import mean_absolute_error
+mae = mean_absolute_error(y_test, predicted_next_row_CNNIBFA)
+print("Mean Absolute Error:", mae)
+
+rmse = np.sqrt(mse_cnnibfa)
+print("Root Mean Squared Error:", rmse)
+
+import matplotlib.pyplot as plt
+plt.scatter(y_test, predicted_next_row_CNNIBFA)
+plt.xlabel("Actual CO2 Emissions")
+plt.ylabel("Predicted CO2 Emissions")
+plt.title("Actual vs. Predicted CO2 Emissions")
+plt.show()
+
+
+residuals = y_test - predicted_next_row_CNNIBFA
+plt.hist(residuals, bins=20)
+plt.xlabel("Residuals")
+plt.ylabel("Frequency")
+plt.title("Distribution of Residuals")
+plt.show()
+
+from sklearn.metrics import mean_squared_error
+
+# Assuming y_test contains the true labels and predicted_next_row_CNNIBFA contains the predicted values
+mse = mean_squared_error(y_test, predicted_next_row_CNNIBFA)
+
+# Calculate accuracy (inverse of MSE)
+accuracy = (1 - mse_cnnibfa)*100
+
+print("Accuracy:", accuracy )
